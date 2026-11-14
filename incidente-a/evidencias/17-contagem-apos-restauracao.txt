@@ -1,0 +1,5 @@
+ clientes_apos_restauracao 
+---------------------------
+                      1000
+(1 row)
+
