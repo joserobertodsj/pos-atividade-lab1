@@ -244,3 +244,77 @@ RTO: 6610,561 segundos
 O RTO medido foi de **6.610,561 segundos**, equivalente a **1 hora, 50 minutos e 10,561 segundos**.
 
 O RPO observado foi de **50 clientes**, correspondente aos registros cadastrados após o backup e ausentes na restauração.
+
+## 8. Criação do usuário com privilégio mínimo
+
+
+```bash
+docker compose exec primary psql -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -c "
+CREATE ROLE app LOGIN PASSWORD 'app';
+GRANT SELECT, INSERT, UPDATE ON clientes TO app;
+GRANT USAGE ON SEQUENCE clientes_id_seq TO app;
+" 2>&1 | tee evidencias/19-criacao-usuario-app.txt
+```
+
+Foram concedidas somente as permissões necessárias para consultar, inserir e atualizar clientes, além do uso da sequência responsável pela geração do identificador. Não foram concedidas permissões para `DELETE` ou propriedade sobre a tabela.
+
+## 9. Registro do horário dos testes do usuário app + testes
+
+Horário registrado em `evidencias/20-horario-testes-usuario-app.txt`.
+
+```bash
+date '+Início dos testes do usuário app: %Y-%m-%d %H:%M:%S.%3N %z' \
+  | tee evidencias/20-horario-testes-usuario-app.txt
+```
+
+### Tentativa de DELETE como app
+
+```bash
+docker compose exec primary psql -U app -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -c "SELECT current_user;" \
+  -c "DELETE FROM clientes;" \
+  2>&1 | tee evidencias/21-app-delete-negado.txt
+```
+
+Resultado: a operação falhou com `permission denied for table clientes`. Isso comprova que o usuário `app` não possui permissão para excluir clientes.
+
+### Tentativa de DROP TABLE como app
+
+```bash
+docker compose exec primary psql -U app -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -c "SELECT current_user;" \
+  -c "DROP TABLE clientes;" \
+  2>&1 | tee evidencias/22-app-drop-negado.txt
+```
+
+Resultado: a operação falhou porque o usuário `app` não é proprietário da tabela `clientes`.
+
+### Teste de INSERT como app
+
+```bash
+docker compose exec primary psql -U app -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -c "SELECT current_user;" \
+  -c "INSERT INTO clientes (nome, email)
+      VALUES ('Cliente inserido pelo app', 'app@loja.com');" \
+  2>&1 | tee evidencias/23-app-insert-permitido.txt
+```
+
+Resultado: a operação foi concluída com `INSERT 0 1`, comprovando que o usuário possui a permissão necessária para cadastrar clientes.
+
+### Confirmação do cadastro realizado pelo app
+
+```bash
+docker compose exec primary psql -U app -d postgres \
+  -c "
+SELECT id, nome, email
+FROM clientes
+WHERE email = 'app@loja.com';
+" 2>&1 | tee evidencias/24-confirmacao-insert-app.txt
+```
+
+Resultado: o cliente `app@loja.com` foi localizado, confirmando que o `INSERT` autorizado foi persistido.
