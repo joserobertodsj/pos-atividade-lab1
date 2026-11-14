@@ -122,3 +122,38 @@ docker compose exec primary psql -U postgres -d postgres \
   -c "SELECT count(*) AS total_clientes_antes_ataque FROM clientes;" \
   2>&1 | tee evidencias/10-contagem-1050.txt
 ```
+## 5. Registro do T0 — início do incidente + exclusao dos clientes
+
+O T0 representa o momento imediatamente anterior à exclusão dos clientes.
+
+Horário registrado em `evidencias/11-T0-inicio-incidente.txt`.
+
+```bash
+date '+T0=%Y-%m-%d %H:%M:%S.%3N %z | epoch_ms=%s%3N' \
+  | tee evidencias/11-T0-inicio-incidente.txt
+```
+
+### exclusao
+
+```bash
+docker compose exec primary psql -U postgres -d postgres \
+  -c "DELETE FROM clientes;" \
+  2>&1 | tee evidencias/12-ataque-delete-clientes.txt
+```
+
+O comando apagou os 1.050 clientes existentes no primário.
+
+### contagem replica
+
+
+```bash
+docker compose exec replica psql -U postgres -d postgres \
+  -c "
+SELECT
+    pg_is_in_recovery() AS eh_replica,
+    count(*) AS clientes_apos_ataque
+FROM clientes;
+" 2>&1 | tee evidencias/13-contagem-replica-apos-ataque.txt
+```
+
+A consulta verificou se a exclusão realizada no primário também foi reproduzida na réplica.
