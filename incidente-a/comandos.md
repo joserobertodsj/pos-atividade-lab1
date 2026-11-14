@@ -207,3 +207,40 @@ docker compose exec primary psql -U postgres -d postgres \
 ```
 
 A contagem final apresentou 1.000 clientes. Os 50 clientes cadastrados após o backup não foram recuperados.
+
+## 7. Cálculo do RTO
+
+Horário: após o registro do T1.
+
+Os valores em milissegundos foram extraídos das evidências de T0 e T1.
+
+```bash
+incidente_t0_ms=$(sed -n 's/.*epoch_ms=\([0-9]*\).*/\1/p' \
+  evidencias/11-T0-inicio-incidente.txt)
+
+incidente_t1_ms=$(sed -n 's/.*epoch_ms=\([0-9]*\).*/\1/p' \
+  evidencias/16-T1-fim-restauracao.txt)
+
+incidente_rto_ms=$((incidente_t1_ms - incidente_t0_ms))
+
+printf 'T0 epoch_ms: %s\nT1 epoch_ms: %s\nRTO: %s ms\n' \
+  "$incidente_t0_ms" "$incidente_t1_ms" "$incidente_rto_ms" \
+  | tee evidencias/18-calculo-rto.txt
+
+awk -v ms="$incidente_rto_ms" \
+  'BEGIN { printf "RTO: %.3f segundos\n", ms / 1000 }' \
+  | tee -a evidencias/18-calculo-rto.txt
+```
+
+Resultado:
+
+```text
+T0 epoch_ms: 1794667276823
+T1 epoch_ms: 1794673887384
+RTO: 6610561 ms
+RTO: 6610,561 segundos
+```
+
+O RTO medido foi de **6.610,561 segundos**, equivalente a **1 hora, 50 minutos e 10,561 segundos**.
+
+O RPO observado foi de **50 clientes**, correspondente aos registros cadastrados após o backup e ausentes na restauração.
