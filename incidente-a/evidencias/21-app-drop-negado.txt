@@ -1,0 +1,6 @@
+ current_user 
+--------------
+ app
+(1 row)
+
+ERROR:  must be owner of table clientes

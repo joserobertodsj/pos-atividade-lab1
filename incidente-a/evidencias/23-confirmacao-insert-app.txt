@@ -1,0 +1,5 @@
+  id  |           nome            |    email     
+------+---------------------------+--------------
+ 1001 | Cliente inserido pelo app | app@loja.com
+(1 row)
+
