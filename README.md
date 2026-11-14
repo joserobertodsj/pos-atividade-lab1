@@ -2,8 +2,8 @@
 
 ## Integrantes
 
-- `[NOME DO INTEGRANTE 1]`
-- `[NOME DO INTEGRANTE 2]`
+- `[Isla Artemes]`
+- `[José Roberto]`
 
 ## 1. Objetivo
 
