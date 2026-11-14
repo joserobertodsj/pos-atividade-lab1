@@ -1,0 +1,2 @@
+-rw-r--r-- 1 root root 38K Nov 14 14:08 /tmp/backup_clientes.sql
+e67787fb1d0846259a2d8ea8c3a1b6d79070e86841646ac74ca44e41f0838025  /tmp/backup_clientes.sql

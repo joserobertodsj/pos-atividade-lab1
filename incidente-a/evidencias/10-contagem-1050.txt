@@ -1,0 +1,5 @@
+ total_clientes_antes_ataque 
+-----------------------------
+                        1050
+(1 row)
+
