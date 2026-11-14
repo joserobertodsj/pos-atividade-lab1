@@ -2,8 +2,8 @@
 
 ## Integrantes
 
-- `[Isla Artemes]`
-- `[José Roberto]`
+- `Isla Artemes`
+- `José Roberto`
 
 ## 1. Objetivo
 
