@@ -157,3 +157,53 @@ FROM clientes;
 ```
 
 A consulta verificou se a exclusão realizada no primário também foi reproduzida na réplica.
+
+## 6. Remoção da tabela antes da restauração + restauracao + contagem
+
+
+```bash
+docker compose exec primary psql -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -c "DROP TABLE clientes;" \
+  2>&1 | tee evidencias/14-drop-tabela-clientes.txt
+```
+
+A tabela vazia foi removida para permitir sua recriação a partir do backup.
+
+### Restauração do backup
+
+
+```bash
+docker compose exec primary psql -U postgres -d postgres \
+  -v ON_ERROR_STOP=1 \
+  -f /tmp/backup_clientes.sql \
+  2>&1 | tee evidencias/15-restauracao-backup.txt
+```
+
+A restauração recriou a tabela, a sequência e as restrições, além de copiar os 1.000 clientes presentes no backup.
+
+### Registro do T1 — fim da restauração
+
+Horário registrado em `evidencias/16-T1-fim-restauracao.txt`.
+
+```bash
+date '+T1=%Y-%m-%d %H:%M:%S.%3N %z | epoch_ms=%s%3N' \
+  | tee evidencias/16-T1-fim-restauracao.txt
+```
+
+Valor registrado:
+
+```text
+T1=2026-11-14 13:31:27.384 -0300
+epoch_ms=1794673887384
+```
+
+###Contagem após a restauração
+
+```bash
+docker compose exec primary psql -U postgres -d postgres \
+  -c "SELECT count(*) AS clientes_apos_restauracao FROM clientes;" \
+  2>&1 | tee evidencias/17-contagem-apos-restauracao.txt
+```
+
+A contagem final apresentou 1.000 clientes. Os 50 clientes cadastrados após o backup não foram recuperados.
